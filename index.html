@@ -368,8 +368,15 @@
                   verd→comp  : (52,105)→(52,52)→(136,52)           blauw
               -->
               <svg width="100%" viewBox="0 0 340 280" xmlns="http://www.w3.org/2000/svg">
-
-                <!-- ══ LEIDINGEN MET RECHTE HOEKEN (vóór componenten tekenen) ══ -->
+                <defs>
+                  <clipPath id="compClip">
+                    <circle cx="160" cy="52" r="23"/>
+                  </clipPath>
+                  <!-- powerClip: rechthoek van powerFillY tot basis driehoek y=26 -->
+                  <clipPath id="powerClip">
+                    <rect x="130" y="78" :width="powerFillX" height="30"/>
+                  </clipPath>
+                </defs>
 
                 <!-- comp → condensor: rechts uit comp → horizontaal → neer naar condensor top -->
                 <polyline points="184,52 268,52 268,105"
@@ -405,13 +412,33 @@
                 <!-- verd→comp: horizontaal naar rechts, y=52 x≈88 -->
                 <polygon points="86,49 92,52 86,55" fill="#2471a3"/>
 
-                <!-- ══ COMPRESSOR (cirkel met twee schuine lijnen, punt rechts) ══ -->
+                <!-- label boven de compressor -->
+                <text x="160" y="12" text-anchor="middle" font-size="9" fill="#555" font-family="IBM Plex Mono,monospace">compressor</text>
+
+                <!-- ══ COMPRESSOR (grote driehoek geclipped op cirkel) ══ -->
                 <circle cx="160" cy="52" r="24" fill="#f4f1ec" stroke="#444" stroke-width="1.8"/>
-                <line x1="140" y1="40" x2="184" y2="52" stroke="#444" stroke-width="1.6" stroke-linecap="round"/>
-                <line x1="140" y1="64" x2="184" y2="52" stroke="#444" stroke-width="1.6" stroke-linecap="round"/>
+                <!-- grote driehoek: basis ver links, punt ver rechts buiten cirkel -->
+                <polygon points="130,22 130,82 210,52"
+                  fill="none" stroke="#444" stroke-width="1.8"
+                  stroke-linejoin="round" clip-path="url(#compClip)"/>
                 <!-- status LED -->
                 <circle cx="174" cy="32" r="4" :fill="currentPower > 0 ? '#27ae60' : '#aaa'"/>
-                <text x="160" y="12" text-anchor="middle" font-size="9" fill="#555" font-family="IBM Plex Mono,monospace">compressor</text>
+
+                <!-- ══ VERMOGENSMETER onder compressor ══
+                     Scherpe hoek linksonder (130,106), rechte hoek rechtsonder (190,106),
+                     derde hoek rechtsboven (190,80).
+                     Lange zijde onderaan horizontaal, schuine zijde bovenaan, korte zijde rechts verticaal.
+                     Inkleuren van links naar rechts.
+                -->
+                <polygon points="130,106 190,106 190,80"
+                  fill="none" stroke="#27ae60" stroke-width="1.6" stroke-linejoin="round"/>
+                <polygon points="130,106 190,106 190,80"
+                  :fill="currentPower > 0 ? '#27ae60' : '#eee'" opacity="0.85"
+                  :clip-path="'url(#powerClip)'"/>
+                <!-- percentage label rechts naast de driehoek -->
+                <text x="196" y="100" text-anchor="start" font-size="10" font-weight="bold"
+                  :fill="currentPower > 0 ? '#27ae60' : '#aaa'"
+                  font-family="IBM Plex Mono,monospace">{{ Math.round(currentPower/hp_power*100) }}%</text>
 
                 <!-- ══ CONDENSOR (rechts, rood) ══ -->
                 <rect x="236" y="105" width="64" height="40" fill="none" stroke="#c0392b" stroke-width="1.8" rx="2"/>
@@ -518,7 +545,7 @@ new Vue({
     room: 20,
     outside_temp: -7,
 
-    hp_power: 5,
+    hp_power: 6,
     min_mod: 0.3,
 
     currentPower: 0,
@@ -526,6 +553,14 @@ new Vue({
     currentCOP: 0,
 
     system: "rad"
+  },
+
+  computed: {
+    powerFillX() {
+      // driehoek breedte = 190-130 = 60px, vul van links (0) naar rechts (60)
+      const ratio = Math.min(1, Math.max(0, this.currentPower / this.hp_power));
+      return ratio * 60;
+    }
   },
 
   methods: {
